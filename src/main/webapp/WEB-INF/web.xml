@@ -31,7 +31,7 @@
   </servlet>
   
   <servlet-mapping>
-    <servlet-name>sat-chat</servlet-name>
+    <servlet-name>dispatch</servlet-name>
     <url-pattern>/_ah/xmpp/message/chat/</url-pattern>
   </servlet-mapping>
 </web-app>

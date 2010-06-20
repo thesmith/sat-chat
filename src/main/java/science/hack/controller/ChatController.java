@@ -2,14 +2,17 @@ package science.hack.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import science.hack.ConversationService;
+import science.hack.service.ConversationService;
 
 import com.google.appengine.api.xmpp.JID;
 import com.google.appengine.api.xmpp.Message;
@@ -20,10 +23,17 @@ import com.google.appengine.api.xmpp.XMPPServiceFactory;
 
 @Controller
 public class ChatController {
+    
+    private static final Pattern JID = Pattern.compile("^(.*)\\/?.*$");
 
-    private static final ConversationService conversationService = new ConversationService();
+    private final ConversationService conversationService;
 
-    @RequestMapping(value = "/_ah/xmpp/message/chat/")
+    @Autowired
+    public ChatController(ConversationService conversationService) {
+        this.conversationService = conversationService;
+    }
+
+    @RequestMapping(value = "/*")
     public void processChat(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             XMPPService xmpp = XMPPServiceFactory.getXMPPService();
@@ -31,8 +41,14 @@ public class ChatController {
             JID fromJid = msg.getFromJid();
             String body = msg.getBody();
 
-            String msgBody = "You sent me : " + body;
-            Message replyMessage = new MessageBuilder().withRecipientJids(fromJid).withBody(msgBody).build();
+            String userId = fromJid.getId();
+            Matcher matcher = JID.matcher(fromJid.getId());
+            if (matcher.matches()) {
+                userId = matcher.group(1);
+            }
+            
+            String reply = conversationService.chat(userId, body.toLowerCase().replace("'", ""));
+            Message replyMessage = new MessageBuilder().withRecipientJids(fromJid).withBody(reply).build();
 
             boolean messageSent = false;
             if (xmpp.getPresence(fromJid).isAvailable()) {

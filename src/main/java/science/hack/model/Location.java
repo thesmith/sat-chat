@@ -41,4 +41,8 @@ public class Location {
     public String toString() {
         return "Longitude: "+longitude+", Latitude: "+latitude;
     }
+    
+    public String toKey() {
+        return "location_"+longitude.intValue()+"_"+latitude.intValue();
+    }
 }
